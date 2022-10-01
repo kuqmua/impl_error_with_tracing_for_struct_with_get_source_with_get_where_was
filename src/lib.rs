@@ -49,7 +49,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|(key, e)| format!("{}, ", e.get_bunyan_where_was(source_place_type, git_info)))
+                    .map(|e| format!("{}, ", e.get_bunyan_where_was(source_place_type, git_info)))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -59,6 +59,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         where_was_vec_as_string.pop();
                     }
                     let where_was_handle = format!("[{} from [{}]]", where_was.file_line_column(), where_was_vec_as_string);
+                    let where_was_handle = String::from("kekw");
                     tracing::error!(
                         error = error_handle,
                         where_was = where_was_handle,
@@ -78,7 +79,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|(key, e)| format!("{}, ", e.get_bunyan_where_was(source_place_type, git_info)))
+                    .map(|e| format!("{}, ", e.get_bunyan_where_was(source_place_type, git_info)))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -219,7 +220,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     let error_handle = source.get_source();
                     tracing::error!(error = error_handle);
                 }
-            }
+            };
         }
     };
     let gen = quote::quote! {
