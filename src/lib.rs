@@ -1,29 +1,34 @@
-#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithWhereWas)]
-pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_where_was(
+#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas)]
+pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input)
-        .expect("ImplErrorWithTracingForStructWithGetSourceWithWhereWas syn::parse(input) failed");
+    let ast: syn::DeriveInput = syn::parse(input).expect(
+        "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas syn::parse(input) failed",
+    );
     let fields = match ast.data {
         syn::Data::Struct(struct_item) => struct_item.fields,
-        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithWhereWas only works on structs"),
+        _ => panic!(
+            "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas only works on structs"
+        ),
     };
     let ident = &ast.ident;
     let fields_named = match fields {
         syn::Fields::Named(fields_named) => fields_named,
         _ => panic!(
-            "ImplErrorWithTracingForStructWithGetSourceWithWhereWas only works with named fields"
+            "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas only works with named fields"
         ),
     };
     match fields_named.named.len() {
         2 => (),
         _ => {
-            panic!("ImplErrorWithTracingForStructWithGetSourceWithWhereWas fields_named.len() != 2")
+            panic!(
+                "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas fields_named.len() != 2"
+            )
         }
     }
     let source_type_ident = match &fields_named.named[0].ty {
         syn::Type::Path(type_path) => type_path,
-        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithWhereWas only works on structs fields with  syn::Type::Path type"),
+        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas only works on structs fields with  syn::Type::Path type"),
     };
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
