@@ -194,7 +194,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
             match source_place_type {
                 tufa_common::config::source_place_type::SourcePlaceType::Source => {
                     let error_handle = source.get_source();
-                    let where_was_handle = source.get_bunyan_with_additional_where_was(
+                    let where_was_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
@@ -207,7 +207,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::Github => {
                     let error_handle = source.get_source();
-                    let where_was_handle = source.get_bunyan_with_additional_where_was(
+                    let where_was_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
