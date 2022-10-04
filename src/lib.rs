@@ -49,7 +49,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|e| e.get_bunyan_where_was_separated(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled))
+                    .map(|e| e.get_bunyan_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -79,7 +79,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|e| format!("{}, ", e.get_bunyan_where_was_separated(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
+                    .map(|e| format!("{}, ", e.get_bunyan_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -129,7 +129,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_bunyan_where_was_separated(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
+                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_bunyan_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -158,7 +158,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                     }
                     let mut where_was_vec_as_string = source
                     .iter()
-                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_bunyan_where_was_separated(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
+                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_bunyan_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
