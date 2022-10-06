@@ -38,7 +38,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                 tufa_common::config::source_place_type::SourcePlaceType::Source => {
                     let mut error_handle = source
                     .iter()
-                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled, e.get_source()))
+                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -47,12 +47,19 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::Github => {
                     let mut error_handle = source
                     .iter()
-                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled, e.get_source()))
+                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -61,7 +68,14 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::None => {
                     let mut error_handle = source
@@ -75,9 +89,14 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(
-                        error = error_handle
-                    );
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
@@ -87,7 +106,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                 tufa_common::config::source_place_type::SourcePlaceType::Source => {
                     let mut error_handle = source
                     .iter()
-                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled, format!("{} {}", key, e.get_source())))
+                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -96,12 +115,19 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::Github => {
                     let mut error_handle = source
                     .iter()
-                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled, format!("{} {}", key, e.get_source())))
+                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -110,7 +136,14 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::None => {
                     let mut error_handle = source
@@ -124,7 +157,14 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
@@ -132,35 +172,55 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
         quote::quote! {
             match source_place_type {
                 tufa_common::config::source_place_type::SourcePlaceType::Source => {
-                    let error_handle = source.get_source();
-                    let where_was_handle = source.get_log_with_additional_where_was(
+                    let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
-                        error_handle,
-                        CONFIG.is_bunyan_separated_by_line_enabled
+                        source.get_source(),
+                        CONFIG.is_tracing_enabled
                     );
-                    tracing::error!(error = where_was_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::Github => {
-                    let error_handle = source.get_source();
-                    let where_was_handle = source.get_log_with_additional_where_was(
+                    let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
-                        error_handle,
-                        CONFIG.is_bunyan_separated_by_line_enabled
+                        source.get_source(),
+                        CONFIG.is_tracing_enabled
                     );
-                    tracing::error!(error = where_was_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
                 tufa_common::config::source_place_type::SourcePlaceType::None => {
                     let error_handle = source.get_source();
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
     };
     let gen = quote::quote! {
+        use ansi_term::Colour::RGB;
         impl tufa_common::traits::with_tracing::WithTracing<#source_type_ident> for #ident {
             fn with_tracing(
                 source: #source_type_ident,
