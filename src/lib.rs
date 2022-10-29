@@ -1,7 +1,18 @@
-#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas)]
-pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was(
+#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWasFromTufaCommon)]
+pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was_from_tufa_common(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
+    generate(input, "tufa_common")
+}
+
+#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWasFromCrate)]
+pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was_from_crate(
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    generate(input, "crate")
+}
+
+fn generate(input: proc_macro::TokenStream, path: &str) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect(
         "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas syn::parse(input) failed",
     );
@@ -32,10 +43,42 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
     };
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
+    let source_place_type_source_path_ident = syn::Ident::new(
+        &format!(
+            "{}::config::source_place_type::SourcePlaceType::Source",
+            path
+        ),
+        ident.span(),
+    );
+    let source_place_type_github_path_ident = syn::Ident::new(
+        &format!(
+            "{}::config::source_place_type::SourcePlaceType::Github",
+            path
+        ),
+        ident.span(),
+    );
+    let source_place_type_none_path_ident = syn::Ident::new(
+        &format!("{}::config::source_place_type::SourcePlaceType::None", path),
+        ident.span(),
+    );
+    let with_tracing_path_ident = syn::Ident::new(
+        &format!("{}::traits::with_tracing::WithTracing", path),
+        ident.span(),
+    );
+    let where_was_path_ident =
+        syn::Ident::new(&format!("{}::where_was::WhereWas", path), ident.span());
+    let source_place_type_path_ident = syn::Ident::new(
+        &format!("{}config::source_place_type::SourcePlaceType", path),
+        ident.span(),
+    );
+    let git_info_path_ident = syn::Ident::new(
+        &format!("{}::helpers::git::git_info::GitInformation", path),
+        ident.span(),
+    );
     let error_and_where_was_init = if first_source_type_ident_as_string == *"Vec" {
         quote::quote! {
             match source_place_type {
-                tufa_common::config::source_place_type::SourcePlaceType::Source => {
+                #source_place_type_source_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
@@ -56,7 +99,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::Github => {
+                #source_place_type_github_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
@@ -77,7 +120,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::None => {
+                #source_place_type_none_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|e| format!("{}, ", e.get_source()))
@@ -103,7 +146,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
     } else if first_source_type_ident_as_string == *"HashMap" {
         quote::quote! {
             match source_place_type {
-                tufa_common::config::source_place_type::SourcePlaceType::Source => {
+                #source_place_type_source_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
@@ -124,7 +167,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::Github => {
+                #source_place_type_github_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
@@ -145,7 +188,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::None => {
+                #source_place_type_none_path_ident => {
                     let mut error_handle = source
                     .iter()
                     .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
@@ -171,7 +214,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
     } else {
         quote::quote! {
             match source_place_type {
-                tufa_common::config::source_place_type::SourcePlaceType::Source => {
+                #source_place_type_source_path_ident => {
                     let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
@@ -188,7 +231,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::Github => {
+                #source_place_type_github_path_ident => {
                     let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
@@ -205,7 +248,7 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         }
                     }
                 }
-                tufa_common::config::source_place_type::SourcePlaceType::None => {
+                #source_place_type_none_path_ident => {
                     let error_handle = source.get_source();
                     match CONFIG.is_tracing_enabled {
                         true => {
@@ -221,12 +264,12 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
     };
     let gen = quote::quote! {
         use ansi_term::Colour::RGB;
-        impl tufa_common::traits::with_tracing::WithTracing<#source_type_ident> for #ident {
+        impl #with_tracing_path_ident<#source_type_ident> for #ident {
             fn with_tracing(
                 source: #source_type_ident,
-                where_was: tufa_common::where_was::WhereWas,
-                source_place_type: &tufa_common::config::source_place_type::SourcePlaceType,
-                git_info: &tufa_common::helpers::git::git_info::GitInformation,
+                where_was: #where_was_path_ident,
+                source_place_type: &#source_place_type_path_ident,
+                git_info: &#git_info_path_ident,
             ) -> Self {
                 #error_and_where_was_init
                 Self { source, where_was }
