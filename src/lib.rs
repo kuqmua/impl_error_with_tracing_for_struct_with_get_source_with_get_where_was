@@ -1,6 +1,20 @@
-#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas)]
-pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was(
+#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWasFromTufaCommon)]
+pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was_from_tufa_common(
     input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    generate(input, proc_macro_helpers::path::Path::TufaCommon)
+}
+
+#[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWasFromCrate)]
+pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was_from_crate(
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    generate(input, proc_macro_helpers::path::Path::Crate)
+}
+
+fn generate(
+    input: proc_macro::TokenStream,
+    path: proc_macro_helpers::path::Path,
 ) -> proc_macro::TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).expect(
         "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas syn::parse(input) failed",
@@ -32,13 +46,38 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
     };
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
+    let source_place_type_source_token_stream =
+        format!("{path}::config::source_place_type::SourcePlaceType::Source")
+            .parse::<proc_macro2::TokenStream>()
+            .expect("path parse failed");
+    let source_place_type_github_token_stream =
+        format!("{path}::config::source_place_type::SourcePlaceType::Github")
+            .parse::<proc_macro2::TokenStream>()
+            .expect("path parse failed");
+    let source_place_type_none_token_stream =
+        format!("{path}::config::source_place_type::SourcePlaceType::None")
+            .parse::<proc_macro2::TokenStream>()
+            .expect("path parse failed");
+    let with_tracing_token_stream = format!("{path}::traits::with_tracing::WithTracing")
+        .parse::<proc_macro2::TokenStream>()
+        .expect("path parse failed");
+    let where_was_token_stream = format!("{path}::where_was::WhereWas")
+        .parse::<proc_macro2::TokenStream>()
+        .expect("path parse failed");
+    let source_place_type_token_stream =
+        format!("{path}::config::source_place_type::SourcePlaceType")
+            .parse::<proc_macro2::TokenStream>()
+            .expect("path parse failed");
+    let git_info_token_stream = format!("{path}::helpers::git::git_info::GitInformation")
+        .parse::<proc_macro2::TokenStream>()
+        .expect("path parse failed");
     let error_and_where_was_init = if first_source_type_ident_as_string == *"Vec" {
         quote::quote! {
             match source_place_type {
-                SourcePlaceType::Source => {
+                #source_place_type_source_token_stream => {
                     let mut error_handle = source
                     .iter()
-                    .map(|e| e.get_source())
+                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -47,28 +86,19 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    let mut where_was_vec_as_string = source
-                    .iter()
-                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !where_was_vec_as_string.is_empty() {
-                        where_was_vec_as_string.pop();
-                        where_was_vec_as_string.pop();
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
                     }
-                    let where_was_handle = format!("[{} from [{}]]", where_was.file_line_column(), where_was_vec_as_string);
-                    let where_was_handle = String::from("kekw");
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
                 }
-                SourcePlaceType::Github => {
+                #source_place_type_github_token_stream => {
                     let mut error_handle = source
                     .iter()
-                    .map(|e| e.get_source())
+                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -77,24 +107,16 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    let mut where_was_vec_as_string = source
-                    .iter()
-                    .map(|e| format!("{}, ", e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !where_was_vec_as_string.is_empty() {
-                        where_was_vec_as_string.pop();
-                        where_was_vec_as_string.pop();
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
                     }
-                    let where_was_handle = format!("[{} from [{}]]", where_was.file_line_column(), where_was_vec_as_string);
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
                 }
-                SourcePlaceType::None => {
+                #source_place_type_none_token_stream => {
                     let mut error_handle = source
                     .iter()
                     .map(|e| format!("{}, ", e.get_source()))
@@ -106,19 +128,24 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(
-                        error = error_handle
-                    );
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
     } else if first_source_type_ident_as_string == *"HashMap" {
         quote::quote! {
             match source_place_type {
-                SourcePlaceType::Source => {
+                #source_place_type_source_token_stream => {
                     let mut error_handle = source
                     .iter()
-                    .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
+                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -127,27 +154,19 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    let mut where_was_vec_as_string = source
-                    .iter()
-                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !where_was_vec_as_string.is_empty() {
-                        where_was_vec_as_string.pop();
-                        where_was_vec_as_string.pop();
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
                     }
-                    let where_was_handle = format!("[{} from [{}]]", where_was.file_line_column(), where_was_vec_as_string);
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
                 }
-                SourcePlaceType::Github => {
+                #source_place_type_github_token_stream => {
                     let mut error_handle = source
                     .iter()
-                    .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
+                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
                     .fold(String::from(""), |mut acc, elem| {
                         acc.push_str(&elem);
                         acc
@@ -156,24 +175,16 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    let mut where_was_vec_as_string = source
-                    .iter()
-                    .map(|(key, e)| format!("{} for [{}], ", key, e.get_log_where_was(source_place_type, git_info, CONFIG.is_bunyan_separated_by_line_enabled)))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !where_was_vec_as_string.is_empty() {
-                        where_was_vec_as_string.pop();
-                        where_was_vec_as_string.pop();
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
                     }
-                    let where_was_handle = format!("[{} from [{}]]", where_was.file_line_column(), where_was_vec_as_string);
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
                 }
-                SourcePlaceType::None => {
+                #source_place_type_none_token_stream => {
                     let mut error_handle = source
                     .iter()
                     .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
@@ -185,53 +196,76 @@ pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_
                         error_handle.pop();
                         error_handle.pop();
                     }
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
     } else {
         quote::quote! {
             match source_place_type {
-                SourcePlaceType::Source => {
-                    let error_handle = source.get_source();
-                    let where_was_handle = source.get_log_with_additional_where_was(
+                #source_place_type_source_token_stream => {
+                    let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
-                        CONFIG.is_bunyan_separated_by_line_enabled
+                        source.get_source(),
+                        CONFIG.is_tracing_enabled
                     );
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
-                SourcePlaceType::Github => {
-                    let error_handle = source.get_source();
-                    let where_was_handle = source.get_log_with_additional_where_was(
+                #source_place_type_github_token_stream => {
+                    let error_handle = source.get_log_with_additional_where_was(
                         &where_was,
                         source_place_type,
                         git_info,
-                        CONFIG.is_bunyan_separated_by_line_enabled
+                        source.get_source(),
+                        CONFIG.is_tracing_enabled
                     );
-                    tracing::error!(
-                        error = error_handle,
-                        where_was = where_was_handle,
-                    );
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
-                SourcePlaceType::None => {
+                #source_place_type_none_token_stream => {
                     let error_handle = source.get_source();
-                    tracing::error!(error = error_handle);
+                    match CONFIG.is_tracing_enabled {
+                        true => {
+                            tracing::error!(error = error_handle);
+                        }
+                        false => {
+                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        }
+                    }
                 }
             };
         }
     };
     let gen = quote::quote! {
-        impl WithTracing<#source_type_ident> for #ident {
+        use ansi_term::Colour::RGB;
+        impl #with_tracing_token_stream<#source_type_ident> for #ident {
             fn with_tracing(
                 source: #source_type_ident,
-                where_was: WhereWas,
-                source_place_type: &SourcePlaceType,
-                git_info: &GitInformation,
+                where_was: #where_was_token_stream,
+                source_place_type: &#source_place_type_token_stream,
+                git_info: &#git_info_token_stream,
             ) -> Self {
                 #error_and_where_was_init
                 Self { source, where_was }
