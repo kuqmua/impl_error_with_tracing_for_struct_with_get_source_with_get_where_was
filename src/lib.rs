@@ -47,15 +47,15 @@ fn generate(
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
     let source_place_type_source_token_stream =
-        format!("{path}::config::source_place_type::SourcePlaceType::Source")
+        format!("{path}::config_mods::source_place_type::SourcePlaceType::Source")
             .parse::<proc_macro2::TokenStream>()
             .expect("path parse failed");
     let source_place_type_github_token_stream =
-        format!("{path}::config::source_place_type::SourcePlaceType::Github")
+        format!("{path}::config_mods::source_place_type::SourcePlaceType::Github")
             .parse::<proc_macro2::TokenStream>()
             .expect("path parse failed");
     let source_place_type_none_token_stream =
-        format!("{path}::config::source_place_type::SourcePlaceType::None")
+        format!("{path}::config_mods::source_place_type::SourcePlaceType::None")
             .parse::<proc_macro2::TokenStream>()
             .expect("path parse failed");
     let with_tracing_token_stream = format!("{path}::traits::with_tracing::WithTracing")
@@ -65,7 +65,7 @@ fn generate(
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
     let source_place_type_token_stream =
-        format!("{path}::config::source_place_type::SourcePlaceType")
+        format!("{path}::config_mods::source_place_type::SourcePlaceType")
             .parse::<proc_macro2::TokenStream>()
             .expect("path parse failed");
     let git_info_token_stream = format!("{path}::helpers::git::git_info::GitInformation")
