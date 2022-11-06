@@ -68,7 +68,7 @@ fn generate(
         format!("{path}::config_mods::source_place_type::SourcePlaceType")
             .parse::<proc_macro2::TokenStream>()
             .expect("path parse failed");
-    let git_info_token_stream = format!("{path}::helpers::git::git_info::GitInformation")
+    let git_info_token_stream = format!("{path}::common::git::git_info::GitInformation")
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
     let error_and_where_was_init = if first_source_type_ident_as_string == *"Vec" {
