@@ -61,7 +61,7 @@ fn generate(
     let with_tracing_token_stream = format!("{path}::traits::with_tracing::WithTracing")
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
-    let where_was_token_stream = format!("{path}::where_was::WhereWas")
+    let where_was_token_stream = format!("{path}::common::where_was::WhereWas")
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
     let source_place_type_token_stream =
