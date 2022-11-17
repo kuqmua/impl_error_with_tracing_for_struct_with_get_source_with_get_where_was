@@ -1,3 +1,5 @@
+use proc_macro_helpers::global_variables::hardcode::ERROR_ENUM_NAME;
+
 #[proc_macro_derive(ImplErrorWithTracingForStructWithGetSourceWithGetWhereWasFromTufaCommon)]
 pub fn derive_impl_error_with_tracing_for_struct_with_get_source_with_get_where_was_from_tufa_common(
     input: proc_macro::TokenStream,
@@ -44,8 +46,14 @@ fn generate(
         syn::Type::Path(type_path) => type_path,
         _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas only works on structs fields with  syn::Type::Path type"),
     };
+
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
+    println!(
+        "source_type_ident.path.segments {:#?}",
+        source_type_ident.path.segments
+    );
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
+    println!("{:#?}", first_source_type_ident_as_string);
     let source_place_type_source_token_stream =
         format!("{path}::config_mods::source_place_type::SourcePlaceType::Source")
             .parse::<proc_macro2::TokenStream>()
@@ -71,191 +79,384 @@ fn generate(
     let git_info_token_stream = format!("{path}::common::git::git_info::GitInformation")
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
-    let error_and_where_was_init = if first_source_type_ident_as_string == *"Vec" {
-        quote::quote! {
-            match source_place_type {
-                #source_place_type_source_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
+    let error_and_where_was_init = match first_source_type_ident_as_string.contains(ERROR_ENUM_NAME)
+    {
+        true => {
+            if first_source_type_ident_as_string == *"Vec" {
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        #source_place_type_github_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                    }
+                        #source_place_type_none_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| format!("{}, ", e.get_source()))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                    };
                 }
-                #source_place_type_github_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|e| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, e.get_source()))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
+            } else if first_source_type_ident_as_string == *"HashMap" {
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        #source_place_type_github_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                    }
+                        #source_place_type_none_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                    };
                 }
-                #source_place_type_none_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|e| format!("{}, ", e.get_source()))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
+            } else {
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let error_handle = source.get_log_with_additional_where_was(
+                                &where_was,
+                                source_place_type,
+                                git_info,
+                                source.get_source(),
+                                CONFIG.is_tracing_enabled
+                            );
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        #source_place_type_github_token_stream => {
+                            let error_handle = source.get_log_with_additional_where_was(
+                                &where_was,
+                                source_place_type,
+                                git_info,
+                                source.get_source(),
+                                CONFIG.is_tracing_enabled
+                            );
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
-                    }
+                        #source_place_type_none_token_stream => {
+                            let error_handle = source.get_source();
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                    };
                 }
-            };
+            }
         }
-    } else if first_source_type_ident_as_string == *"HashMap" {
-        quote::quote! {
-            match source_place_type {
-                #source_place_type_source_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
+        false => {
+            if first_source_type_ident_as_string == *"Vec" {
+                let second_arguments_gen = match source_type_ident.path.segments[0].arguments {
+                    syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
+                    syn::PathArguments::AngleBracketed(angle_bracketed) => {
+
+                    },
+                    syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
+                };
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| format!("{}, ", e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            let where_was_handle = where_was.file_line_column();
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                                }
+                            }
                         }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                        #source_place_type_github_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| format!("{}, ", e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            let where_was_handle = where_was.github_file_line_column(git_info);
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                                }
+                            }
+                        }
+                        #source_place_type_none_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|e| format!("{}, ", e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                    };
+                }
+            } else if first_source_type_ident_as_string == *"HashMap" {
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| format!("{} {}, ", key, e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            let where_was_handle = where_was.file_line_column();
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                                }
+                            }
+                        }
+                        #source_place_type_github_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| format!("{} {}, ", key, e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            let where_was_handle = where_was.github_file_line_column(git_info);
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                                }
+                            }
+                        }
+                        #source_place_type_none_token_stream => {
+                            let mut error_handle = source
+                            .iter()
+                            .map(|(key, e)| format!("{} {}, ", key, e))
+                            .fold(String::from(""), |mut acc, elem| {
+                                acc.push_str(&elem);
+                                acc
+                            });
+                            if !error_handle.is_empty() {
+                                error_handle.pop();
+                                error_handle.pop();
+                            }
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                    };
+                }
+            } else {
+                quote::quote! {
+                    match source_place_type {
+                        #source_place_type_source_token_stream => {
+                            let error_handle = format!("{} {}", where_was.file_line_column(), source);
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                        #source_place_type_github_token_stream => {
+                            let error_handle = format!("{} {}", where_was.github_file_line_column(git_info), source);
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
+                        }
+                        #source_place_type_none_token_stream => {
+                            let error_handle = format!("{}", source);
+                            match CONFIG.is_tracing_enabled {
+                                true => {
+                                    tracing::error!(error = error_handle);
+                                }
+                                false => {
+                                    println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                                }
+                            }
                         }
                     }
                 }
-                #source_place_type_github_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|(key, e)| e.get_log_where_was(source_place_type, git_info, CONFIG.is_tracing_enabled, format!("{} {}", key, e.get_source())))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
-                        }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                        }
-                    }
-                }
-                #source_place_type_none_token_stream => {
-                    let mut error_handle = source
-                    .iter()
-                    .map(|(key, e)| format!("{} {}, ", key, e.get_source()))
-                    .fold(String::from(""), |mut acc, elem| {
-                        acc.push_str(&elem);
-                        acc
-                    });
-                    if !error_handle.is_empty() {
-                        error_handle.pop();
-                        error_handle.pop();
-                    }
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
-                        }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                        }
-                    }
-                }
-            };
-        }
-    } else {
-        quote::quote! {
-            match source_place_type {
-                #source_place_type_source_token_stream => {
-                    let error_handle = source.get_log_with_additional_where_was(
-                        &where_was,
-                        source_place_type,
-                        git_info,
-                        source.get_source(),
-                        CONFIG.is_tracing_enabled
-                    );
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
-                        }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                        }
-                    }
-                }
-                #source_place_type_github_token_stream => {
-                    let error_handle = source.get_log_with_additional_where_was(
-                        &where_was,
-                        source_place_type,
-                        git_info,
-                        source.get_source(),
-                        CONFIG.is_tracing_enabled
-                    );
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
-                        }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                        }
-                    }
-                }
-                #source_place_type_none_token_stream => {
-                    let error_handle = source.get_source();
-                    match CONFIG.is_tracing_enabled {
-                        true => {
-                            tracing::error!(error = error_handle);
-                        }
-                        false => {
-                            println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                        }
-                    }
-                }
-            };
+            }
         }
     };
     let gen = quote::quote! {
