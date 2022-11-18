@@ -48,12 +48,12 @@ fn generate(
     };
 
     let first_source_type_ident = source_type_ident.path.segments[0].ident.clone();
-    println!(
-        "source_type_ident.path.segments {:#?}",
-        source_type_ident.path.segments
-    );
+    // println!(
+    //     "source_type_ident.path.segments {:#?}",
+    //     source_type_ident.path.segments
+    // );
     let first_source_type_ident_as_string = format!("{}", first_source_type_ident);
-    println!("{:#?}", first_source_type_ident_as_string);
+    // println!("{:#?}", first_source_type_ident_as_string);
     let source_place_type_source_token_stream =
         format!("{path}::config_mods::source_place_type::SourcePlaceType::Source")
             .parse::<proc_macro2::TokenStream>()
@@ -272,10 +272,25 @@ fn generate(
         }
         false => {
             if first_source_type_ident_as_string == *"Vec" {
-                let second_arguments_gen = match source_type_ident.path.segments[0].arguments {
+                let second_arguments_gen = match source_type_ident.path.segments[0].arguments.clone() {
                     syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
                     syn::PathArguments::AngleBracketed(angle_bracketed) => {
-
+                        match angle_bracketed.args.len() {
+                            1 => match angle_bracketed.args[0].clone() {
+                                    syn::GenericArgument::Type(type_handle) => match type_handle {
+                                        syn::Type::Path(type_path) => match type_path.path.segments.len() {
+                                            1 => {
+                                                println!("@@{}", type_path.path.segments[0].ident)
+                                            }
+                                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas type_path.path.segments.len() != 1"),
+                                        },
+                                        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::Type::Path"),
+                                    },
+                                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::GenericArgument::Type"),
+                                }
+                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas angle_bracketed.args.len() != 1"),
+                        }
+                        ()
                     },
                     syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
                 };
