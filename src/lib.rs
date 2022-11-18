@@ -409,6 +409,46 @@ fn generate(
             }
         }
     } else if first_source_type_ident_as_string.contains(ERROR_ENUM_NAME) {
+        //wrong?
+        // quote::quote! {
+        //     match source_place_type {
+        //         #source_place_type_source_token_stream => {
+        //             let error_handle = source.get_source();
+        //             let where_was_handle = where_was.file_line_column();
+        //             match CONFIG.is_tracing_enabled {
+        //                 true => {
+        //                     tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+        //                 }
+        //                 false => {
+        //                     println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+        //                 }
+        //             }
+        //         }
+        //         #source_place_type_github_token_stream => {
+        //             let error_handle = source.get_source();
+        //             let where_was_handle = where_was.github_file_line_column(git_info);
+        //             match CONFIG.is_tracing_enabled {
+        //                 true => {
+        //                     tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+        //                 }
+        //                 false => {
+        //                     println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+        //                 }
+        //             }
+        //         }
+        //         #source_place_type_none_token_stream => {
+        //             let error_handle = source.get_source();
+        //             match CONFIG.is_tracing_enabled {
+        //                 true => {
+        //                     tracing::error!(error = error_handle);
+        //                 }
+        //                 false => {
+        //                     println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         quote::quote! {
             match source_place_type {
                 #source_place_type_source_token_stream => {
