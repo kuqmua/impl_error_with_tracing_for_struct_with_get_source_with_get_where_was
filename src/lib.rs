@@ -76,47 +76,29 @@ fn generate(
         .parse::<proc_macro2::TokenStream>()
         .expect("path parse failed");
     let error_and_where_was_init = if first_source_type_ident_as_string == *"Vec" {
-        let is_wrapper = match source_type_ident.path.segments[0].arguments.clone() {
-                    syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
-                    syn::PathArguments::AngleBracketed(angle_bracketed) => {
-                        match angle_bracketed.args.len() {
-                            1 => match angle_bracketed.args[0].clone() {
-                                    syn::GenericArgument::Type(type_handle) => match type_handle {
-                                        syn::Type::Path(type_path) => match type_path.path.segments.len() {
-                                            1 => {
-                                                let ident_as_string = type_path.path.segments[0].ident.to_string();
-                                                let is_wrapper = if ident_as_string.contains(WRAPPER_NAME)
-                                                    && ident_as_string.contains(ORIGIN_NAME)
-                                                {
-                                                    panic!(
-                                                        "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} contains {} and {}",
-                                                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                                                    );
-                                                } else if ident_as_string.contains(WRAPPER_NAME) {
-                                                    true
-                                                } else if ident_as_string.contains(ORIGIN_NAME) {
-                                                    false
-                                                } else {
-                                                    panic!(
-                                                        "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} does not contain {} or {}",
-                                                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                                                    );
-                                                };
-                                                is_wrapper
-                                            }
-                                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas type_path.path.segments.len() != 1"),
-                                        },
-                                        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::Type::Path"),
-                                    },
-                                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::GenericArgument::Type"),
-                                }
-                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas 1 angle_bracketed.args.len() != 1"),
-                        }
-                    },
-                    syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
-                };
-        match is_wrapper {
-            true => quote::quote! {
+        let ident_as_string = match source_type_ident.path.segments[0].arguments.clone() {
+            syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
+            syn::PathArguments::AngleBracketed(angle_bracketed) => {
+                match angle_bracketed.args.len() {
+                    1 => match angle_bracketed.args[0].clone() {
+                        syn::GenericArgument::Type(type_handle) => match type_handle {
+                            syn::Type::Path(type_path) => match type_path.path.segments.len() {
+                                1 => type_path.path.segments[0].ident.to_string(),
+                                _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas type_path.path.segments.len() != 1"),
+                            },
+                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::Type::Path"),
+                        },
+                        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::GenericArgument::Type"),
+                    }
+                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas 1 angle_bracketed.args.len() != 1"),
+                }
+            },
+            syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
+        };
+        if ident_as_string.contains(WRAPPER_NAME) && ident_as_string.contains(ORIGIN_NAME) {
+            panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} contains {} and {}", ident_as_string, WRAPPER_NAME, ORIGIN_NAME);
+        } else if ident_as_string.contains(WRAPPER_NAME) {
+            quote::quote! {
                 match source_place_type {
                     #source_place_type_source_token_stream => {
                         let mut error_handle = source
@@ -182,119 +164,109 @@ fn generate(
                         }
                     }
                 };
-            },
-            false => quote::quote! {
-                match source_place_type {
-                    #source_place_type_source_token_stream => {
-                        let mut error_handle = source
-                        .iter()
-                        .map(|e| format!("{}, ", e))
-                        .fold(String::from(""), |mut acc, elem| {
-                            acc.push_str(&elem);
-                            acc
-                        });
-                        if !error_handle.is_empty() {
-                            error_handle.pop();
-                            error_handle.pop();
-                        }
-                        let where_was_handle = where_was.file_line_column();
-                        match CONFIG.is_tracing_enabled {
-                            true => {
-                                tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
-                            }
-                            false => {
-                                println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
-                            }
-                        }
-                    }
-                    #source_place_type_github_token_stream => {
-                        let mut error_handle = source
-                        .iter()
-                        .map(|e| format!("{}, ", e))
-                        .fold(String::from(""), |mut acc, elem| {
-                            acc.push_str(&elem);
-                            acc
-                        });
-                        if !error_handle.is_empty() {
-                            error_handle.pop();
-                            error_handle.pop();
-                        }
-                        let where_was_handle = where_was.github_file_line_column(git_info);
-                        match CONFIG.is_tracing_enabled {
-                            true => {
-                                tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
-                            }
-                            false => {
-                                println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
-                            }
-                        }
-                    }
-                    #source_place_type_none_token_stream => {
-                        let mut error_handle = source
-                        .iter()
-                        .map(|e| format!("{}, ", e))
-                        .fold(String::from(""), |mut acc, elem| {
-                            acc.push_str(&elem);
-                            acc
-                        });
-                        if !error_handle.is_empty() {
-                            error_handle.pop();
-                            error_handle.pop();
-                        }
-                        match CONFIG.is_tracing_enabled {
-                            true => {
-                                tracing::error!(error = error_handle);
-                            }
-                            false => {
-                                println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
-                            }
-                        }
-                    }
-                };
-            },
+            }
+        } else if ident_as_string.contains(ORIGIN_NAME) {
+            quote::quote! {
+              match source_place_type {
+                  #source_place_type_source_token_stream => {
+                      let mut error_handle = source
+                      .iter()
+                      .map(|e| format!("{}, ", e))
+                      .fold(String::from(""), |mut acc, elem| {
+                          acc.push_str(&elem);
+                          acc
+                      });
+                      if !error_handle.is_empty() {
+                          error_handle.pop();
+                          error_handle.pop();
+                      }
+                      let where_was_handle = where_was.file_line_column();
+                      match CONFIG.is_tracing_enabled {
+                          true => {
+                              tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                          }
+                          false => {
+                              println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                          }
+                      }
+                  }
+                  #source_place_type_github_token_stream => {
+                      let mut error_handle = source
+                      .iter()
+                      .map(|e| format!("{}, ", e))
+                      .fold(String::from(""), |mut acc, elem| {
+                          acc.push_str(&elem);
+                          acc
+                      });
+                      if !error_handle.is_empty() {
+                          error_handle.pop();
+                          error_handle.pop();
+                      }
+                      let where_was_handle = where_was.github_file_line_column(git_info);
+                      match CONFIG.is_tracing_enabled {
+                          true => {
+                              tracing::error!(error = format!("{} {}", where_was_handle, error_handle));
+                          }
+                          false => {
+                              println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(format!("{} {}", where_was_handle, error_handle)));
+                          }
+                      }
+                  }
+                  #source_place_type_none_token_stream => {
+                      let mut error_handle = source
+                      .iter()
+                      .map(|e| format!("{}, ", e))
+                      .fold(String::from(""), |mut acc, elem| {
+                          acc.push_str(&elem);
+                          acc
+                      });
+                      if !error_handle.is_empty() {
+                          error_handle.pop();
+                          error_handle.pop();
+                      }
+                      match CONFIG.is_tracing_enabled {
+                          true => {
+                              tracing::error!(error = error_handle);
+                          }
+                          false => {
+                              println!("{}", RGB(CONFIG.error_red, CONFIG.error_green, CONFIG.error_blue).bold().paint(error_handle));
+                          }
+                      }
+                  }
+              };
+            }
+        } else {
+            panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} does not contain {} or {}", ident_as_string, WRAPPER_NAME, ORIGIN_NAME);
         }
     } else if first_source_type_ident_as_string == *"HashMap" {
-        let is_wrapper = match source_type_ident.path.segments[0].arguments.clone() {
-                    syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
-                    syn::PathArguments::AngleBracketed(angle_bracketed) => {
-                        match angle_bracketed.args.len() {
-                            2 => match angle_bracketed.args[1].clone() {
-                                    syn::GenericArgument::Type(type_handle) => match type_handle {
-                                        syn::Type::Path(type_path) => match type_path.path.segments.len() {
-                                            1 => {
-                                                let ident_as_string = type_path.path.segments[0].ident.to_string();
-                                                let is_wrapper = if ident_as_string.contains(WRAPPER_NAME)
-                                                    && ident_as_string.contains(ORIGIN_NAME)
-                                                {
-                                                    panic!(
-                                                        "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} contains {} and {}",
-                                                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                                                    );
-                                                } else if ident_as_string.contains(WRAPPER_NAME) {
-                                                    true
-                                                } else if ident_as_string.contains(ORIGIN_NAME) {
-                                                    false
-                                                } else {
-                                                    panic!(
-                                                        "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} does not contain {} or {}",
-                                                        ident_as_string, WRAPPER_NAME, ORIGIN_NAME
-                                                    );
-                                                };
-                                                is_wrapper
-                                            }
-                                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas type_path.path.segments.len() != 1"),
-                                        },
-                                        _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::Type::Path"),
-                                    },
-                                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::GenericArgument::Type"),
+        let ident_as_string = match source_type_ident.path.segments[0].arguments.clone() {
+            syn::PathArguments::None => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::None"),
+            syn::PathArguments::AngleBracketed(angle_bracketed) => {
+                match angle_bracketed.args.len() {
+                    2 => match angle_bracketed.args[1].clone() {
+                        syn::GenericArgument::Type(type_handle) => match type_handle {
+                            syn::Type::Path(type_path) => match type_path.path.segments.len() {
+                                1 => {
+                                    type_path.path.segments[0].ident.to_string()
                                 }
-                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas 2 angle_bracketed.args.len() != 1"),
-                        }
-                    },
-                    syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
+                                _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas type_path.path.segments.len() != 1"),
+                                },
+                            _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::Type::Path"),
+                        },
+                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas works only with syn::GenericArgument::Type"),
+                   }
+                    _ => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas 2 angle_bracketed.args.len() != 1"),
+                }
+            },
+            syn::PathArguments::Parenthesized(_) => panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas does not work with syn::PathArguments::Parenthesized"),
         };
-        match is_wrapper {
-            true => quote::quote! {
+        if ident_as_string.contains(WRAPPER_NAME) && ident_as_string.contains(ORIGIN_NAME) {
+            panic!(
+                "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} contains {} and {}",
+                ident_as_string, WRAPPER_NAME, ORIGIN_NAME
+            );
+        } else if ident_as_string.contains(WRAPPER_NAME) || ident_as_string.contains(ORIGIN_NAME) {
+            quote::quote! {
                 match source_place_type {
                     #source_place_type_source_token_stream => {
                         let mut error_handle = source
@@ -360,8 +332,13 @@ fn generate(
                         }
                     }
                 };
-            },
-            false => quote::quote! {
+            }
+        } else {
+            // panic!(
+            //     "ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas - ident name {} does not contain {} or {}",
+            //     ident_as_string, WRAPPER_NAME, ORIGIN_NAME
+            // );
+            quote::quote! {
                 match source_place_type {
                     #source_place_type_source_token_stream => {
                         let mut error_handle = source
@@ -429,7 +406,7 @@ fn generate(
                         }
                     }
                 };
-            },
+            }
         }
     } else if first_source_type_ident_as_string.contains(ERROR_ENUM_NAME) {
         quote::quote! {
