@@ -544,19 +544,7 @@ fn generate(
                 }
             }
         }
-        // panic!("ImplErrorWithTracingForStructWithGetSourceWithGetWhereWas not a ERROR_ENUM_NAME HashMap or Vec ");
     };
-    // let error_and_where_was_init = match first_source_type_ident_as_string.contains(ERROR_ENUM_NAME)
-    // {
-    //     true => {}
-    //     false => {
-    //         if first_source_type_ident_as_string == *"Vec" {
-    //         } else if first_source_type_ident_as_string == *"HashMap" {
-    //         } else {
-
-    //         }
-    //     }
-    // };
     let gen = quote::quote! {
         use ansi_term::Colour::RGB;
         impl #with_tracing_token_stream<#source_type_ident> for #ident {
